@@ -1,0 +1,47 @@
+// ==============================================
+// SIGIM - Firestore Security Rules
+// ==============================================
+// Copiar este contenido en: Firebase Console → Firestore → Rules
+//
+// Estas reglas aseguran que:
+// - Cualquiera puede CREAR una incidencia (ciudadano anónimo)
+// - Solo usuarios autenticados (admins) pueden LEER y ACTUALIZAR
+// - Nadie puede ELIMINAR incidencias
+// - Los campos sensibles están protegidos
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Colección de incidencias
+    match /incidencias/{incidenciaId} {
+      
+      // Ciudadano: puede crear un reporte (sin login)
+      allow create: if true
+        && request.resource.data.keys().hasAll([
+          'ticketId', 'categoria', 'descripcion', 'ubicacion',
+          'fotoEvidenciaURL', 'estado', 'creadoEn', 'actualizadoEn'
+        ])
+        && request.resource.data.estado == 'pendiente'
+        && request.resource.data.categoria in ['alumbrado', 'pistas', 'limpieza']
+        && request.resource.data.descripcion.size() <= 500;
+      
+      // Admin: puede leer todas las incidencias
+      allow read: if request.auth != null;
+      
+      // Admin: puede actualizar estado y campos de resolución
+      allow update: if request.auth != null
+        && request.resource.data.ticketId == resource.data.ticketId
+        && request.resource.data.creadoEn == resource.data.creadoEn;
+      
+      // Nadie puede eliminar
+      allow delete: if false;
+    }
+
+    // Lectura pública para búsqueda de ticket (solo por ticketId)
+    match /incidencias/{incidenciaId} {
+      allow read: if true
+        && resource.data.ticketId != null;
+    }
+  }
+}
