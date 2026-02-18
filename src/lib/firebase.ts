@@ -1,6 +1,6 @@
-import { initializeApp, getApps } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
+import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
 
 // Configuración de Firebase (variables de entorno)
 const firebaseConfig = {
@@ -12,10 +12,14 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Evitar inicializar múltiples instancias (Next.js hot reload)
-const app =
-  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// Inicialización segura: no crashear si faltan variables (ej. durante SSG en Vercel)
+function initApp(): FirebaseApp | null {
+  if (!firebaseConfig.apiKey) return null;
+  return getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+}
 
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+const app = initApp();
+
+export const auth = app ? getAuth(app) : (null as unknown as Auth);
+export const db = app ? getFirestore(app) : (null as unknown as Firestore);
 export default app;

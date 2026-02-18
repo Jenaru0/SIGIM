@@ -6,13 +6,14 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { toast } from "sonner";
-import { MapPin, LayoutDashboard, List, LogOut, User } from "lucide-react";
+import { MapPin, LayoutDashboard, List, LogOut, User, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/incidencias", icon: List, label: "Incidencias" },
+  { href: "/admin/mapa", icon: Map, label: "Mapa" },
 ];
 
 export default function HeaderAdmin() {

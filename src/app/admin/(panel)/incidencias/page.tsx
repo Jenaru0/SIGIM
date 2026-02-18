@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -11,8 +11,11 @@ import {
   Calendar,
   RefreshCw,
   CheckCircle2,
+  Search,
+  X,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,6 +46,7 @@ export default function IncidenciasPage() {
   const [incidencias, setIncidencias] = useState<Incidencia[]>([]);
   const [loading, setLoading] = useState(true);
   const [tabActual, setTabActual] = useState<string>("todos");
+  const [busqueda, setBusqueda] = useState("");
 
   // Modal de detalle
   const [seleccionada, setSeleccionada] = useState<Incidencia | null>(null);
@@ -122,6 +126,19 @@ export default function IncidenciasPage() {
     }
   };
 
+  // Filtrar incidencias por texto de búsqueda (ticket, descripción, dirección)
+  const incidenciasFiltradas = useMemo(() => {
+    if (!busqueda.trim()) return incidencias;
+
+    const termino = busqueda.toLowerCase().trim();
+    return incidencias.filter(
+      (inc) =>
+        inc.ticketId.toLowerCase().includes(termino) ||
+        inc.descripcion.toLowerCase().includes(termino) ||
+        inc.ubicacion.direccionTexto.toLowerCase().includes(termino),
+    );
+  }, [incidencias, busqueda]);
+
   const getSiguienteEstado = (estado: EstadoId): EstadoId | null => {
     if (estado === "pendiente") return "en_proceso";
     if (estado === "en_proceso") return "resuelto";
@@ -143,6 +160,26 @@ export default function IncidenciasPage() {
         </Button>
       </div>
 
+      {/* Barra de búsqueda */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Input
+          placeholder="Buscar por ticket, descripción o dirección..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="pl-9 pr-9"
+        />
+        {busqueda && (
+          <button
+            onClick={() => setBusqueda("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            aria-label="Limpiar búsqueda"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
       {/* Tabs de filtro */}
       <Tabs value={tabActual} onValueChange={setTabActual} className="w-full">
         <TabsList className="w-full sm:w-auto">
@@ -157,13 +194,15 @@ export default function IncidenciasPage() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
             </div>
-          ) : incidencias.length === 0 ? (
+          ) : incidenciasFiltradas.length === 0 ? (
             <div className="py-12 text-center text-sm text-gray-400">
-              No hay incidencias con este filtro
+              {busqueda
+                ? `No se encontraron resultados para "${busqueda}"`
+                : "No hay incidencias con este filtro"}
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {incidencias.map((inc) => {
+              {incidenciasFiltradas.map((inc) => {
                 const cat = CATEGORIAS.find((c) => c.id === inc.categoria);
                 const estado = ESTADOS[inc.estado];
                 const siguiente = getSiguienteEstado(inc.estado);

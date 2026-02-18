@@ -23,7 +23,10 @@ service cloud.firestore {
           'fotoEvidenciaURL', 'estado', 'creadoEn', 'actualizadoEn'
         ])
         && request.resource.data.estado == 'pendiente'
-        && request.resource.data.categoria in ['alumbrado', 'pistas', 'limpieza']
+        && request.resource.data.categoria in [
+          'alumbrado', 'pistas', 'limpieza',
+          'agua_desague', 'parques', 'senalizacion', 'otros'
+        ]
         && request.resource.data.descripcion.size() <= 500;
       
       // Admin: puede leer todas las incidencias
@@ -34,8 +37,8 @@ service cloud.firestore {
         && request.resource.data.ticketId == resource.data.ticketId
         && request.resource.data.creadoEn == resource.data.creadoEn;
       
-      // Nadie puede eliminar
-      allow delete: if false;
+      // Admin: puede eliminar incidencias
+      allow delete: if request.auth != null;
     }
 
     // Lectura pública para búsqueda de ticket (solo por ticketId)
