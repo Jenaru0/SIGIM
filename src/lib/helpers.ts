@@ -133,10 +133,30 @@ export async function geocodificarInverso(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=es`,
       { headers: { "User-Agent": "SIGIM-Canete/1.0" } },
     );
-    if (!res.ok) throw new Error("Nominatim error");
+    
+    if (!res.ok) {
+      console.error(`Nominatim API error: ${res.status} ${res.statusText}`);
+      throw new Error(`Nominatim HTTP ${res.status}`);
+    }
 
     const data = await res.json();
+    
+    if (!data || data.error) {
+      console.error("Nominatim returned error:", data?.error);
+      throw new Error("Dirección no encontrada");
+    }
+
     const addr = data.address;
+    
+    if (!addr) {
+      console.warn("No address data returned from Nominatim");
+      // Usar display_name como fallback
+      if (data.display_name) {
+        return data.display_name.split(",").slice(0, 3).join(",").trim();
+      }
+      throw new Error("Sin datos de dirección");
+    }
+
     const partes: string[] = [];
 
     if (addr.road) {
@@ -149,13 +169,19 @@ export async function geocodificarInverso(
     if (addr.city || addr.town || addr.village)
       partes.push(addr.city || addr.town || addr.village);
 
-    return (
-      (partes.length > 0
-        ? partes.join(", ")
-        : data.display_name?.split(",").slice(0, 3).join(",").trim()) ||
-      `${lat.toFixed(4)}, ${lng.toFixed(4)}`
-    );
-  } catch {
-    return `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+    if (partes.length > 0) {
+      return partes.join(", ");
+    }
+
+    // Fallback a display_name si no hay partes específicas
+    if (data.display_name) {
+      return data.display_name.split(",").slice(0, 3).join(",").trim();
+    }
+
+    // Último recurso
+    return `Ubicación: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  } catch (error) {
+    console.error("Error en geocodificación inversa:", error);
+    return `Ubicación: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
   }
 }
