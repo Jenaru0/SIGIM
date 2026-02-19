@@ -54,6 +54,7 @@ export default function IncidenciasPage() {
 
   // Modal resolver
   const [modalResolver, setModalResolver] = useState(false);
+  const [modalConfirmResolver, setModalConfirmResolver] = useState(false);
   const [fotoSolucion, setFotoSolucion] = useState<File | null>(null);
   const [comentario, setComentario] = useState("");
   const [resolviendo, setResolviendo] = useState(false);
@@ -81,10 +82,10 @@ export default function IncidenciasPage() {
     incidencia: Incidencia,
     nuevoEstado: EstadoId,
   ) => {
-    // Si el nuevo estado es "resuelto", abrir modal de resolución
+    // Si el nuevo estado es "resuelto", mostrar confirmación
     if (nuevoEstado === "resuelto") {
       setSeleccionada(incidencia);
-      setModalResolver(true);
+      setModalConfirmResolver(true);
       return;
     }
 
@@ -115,6 +116,7 @@ export default function IncidenciasPage() {
       );
       toast.success(`Ticket ${seleccionada.ticketId} marcado como RESUELTO`);
       setModalResolver(false);
+      setModalConfirmResolver(false);
       setFotoSolucion(null);
       setComentario("");
       setSeleccionada(null);
@@ -124,6 +126,11 @@ export default function IncidenciasPage() {
     } finally {
       setResolviendo(false);
     }
+  };
+
+  const procederAResolver = () => {
+    setModalConfirmResolver(false);
+    setModalResolver(true);
   };
 
   // Filtrar incidencias por texto de búsqueda (ticket, descripción, dirección)
@@ -371,6 +378,50 @@ export default function IncidenciasPage() {
                 )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de confirmación para resolver */}
+      <Dialog open={modalConfirmResolver} onOpenChange={setModalConfirmResolver}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              ⚠️ Confirmar Resolución
+            </DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas marcar este ticket como resuelto?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-gray-700">
+              <strong>Ticket:</strong> {seleccionada?.ticketId}
+            </p>
+            <p className="text-gray-700">
+              <strong>Categoría:</strong>{" "}
+              {
+                CATEGORIAS.find((c) => c.id === seleccionada?.categoria)
+                  ?.label
+              }
+            </p>
+            <p className="rounded-lg bg-blue-50 p-2 text-gray-700">
+              Necesitarás subir una foto de la solución aplicada.
+            </p>
+          </div>
+          <div className="flex gap-2 pt-4">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setModalConfirmResolver(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="flex-1 bg-green-600 hover:bg-green-700"
+              onClick={procederAResolver}
+            >
+              Sí, continuar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import { CANETE_CENTER } from "@/lib/constants";
 import "leaflet/dist/leaflet.css";
@@ -38,6 +38,25 @@ function MapClickHandler({
   return null;
 }
 
+// Componente interno para centrar el mapa cuando cambian las coordenadas
+function MapCenter({
+  lat,
+  lng,
+}: {
+  lat: number | null | undefined;
+  lng: number | null | undefined;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (lat && lng) {
+      map.setView([lat, lng], 17); // Zoom a nivel calle (17)
+    }
+  }, [lat, lng, map]);
+
+  return null;
+}
+
 export default function MapaReporte({
   onUbicacionSeleccionada,
   latInicial,
@@ -46,6 +65,13 @@ export default function MapaReporte({
   const [posicion, setPosicion] = useState<[number, number] | null>(
     latInicial && lngInicial ? [latInicial, lngInicial] : null,
   );
+
+  // Actualizar posición cuando cambien las props
+  useEffect(() => {
+    if (latInicial && lngInicial) {
+      setPosicion([latInicial, lngInicial]);
+    }
+  }, [latInicial, lngInicial]);
 
   const handleClick = (lat: number, lng: number) => {
     setPosicion([lat, lng]);
@@ -56,7 +82,11 @@ export default function MapaReporte({
     <div className="space-y-2">
       <div className="overflow-hidden rounded-lg border">
         <MapContainer
-          center={[CANETE_CENTER.lat, CANETE_CENTER.lng]}
+          center={
+            posicion
+              ? [posicion[0], posicion[1]]
+              : [CANETE_CENTER.lat, CANETE_CENTER.lng]
+          }
           zoom={14}
           scrollWheelZoom={true}
           className="h-64 w-full md:h-80"
@@ -66,6 +96,7 @@ export default function MapaReporte({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapClickHandler onUbicacionSeleccionada={handleClick} />
+          <MapCenter lat={latInicial} lng={lngInicial} />
           {posicion && <Marker position={posicion} icon={markerIcon} />}
         </MapContainer>
       </div>

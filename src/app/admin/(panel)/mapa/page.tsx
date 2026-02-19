@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { obtenerIncidencias } from "@/lib/services";
-import { ESTADOS } from "@/lib/constants";
 import type { Incidencia } from "@/lib/types";
 import type { EstadoId } from "@/lib/constants";
 

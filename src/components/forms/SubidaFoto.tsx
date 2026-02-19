@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useState, useRef } from "react";
-import { ImagePlus, X, Loader2 } from "lucide-react";
+import { useCallback, useState, useRef, useEffect } from "react";
+import { ImagePlus, X, Loader2, Camera, FolderOpen } from "lucide-react";
 import { comprimirImagen } from "@/lib/helpers";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 
 interface SubidaFotoProps {
   onFotoSeleccionada: (file: File | null) => void;
@@ -17,7 +18,21 @@ export default function SubidaFoto({
   const [preview, setPreview] = useState<string | null>(null);
   const [comprimiendo, setComprimiendo] = useState(false);
   const [nombreArchivo, setNombreArchivo] = useState<string>("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+
+  // Detectar si es móvil
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        ) || navigator.maxTouchPoints > 2,
+      );
+    };
+    checkMobile();
+  }, []);
 
   const handleArchivo = useCallback(
     async (file: File) => {
@@ -70,7 +85,8 @@ export default function SubidaFoto({
     setPreview(null);
     setNombreArchivo("");
     onFotoSeleccionada(null);
-    if (inputRef.current) inputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
   };
 
   return (
@@ -98,43 +114,70 @@ export default function SubidaFoto({
           </div>
         </div>
       ) : (
-        // Zona de drop / selección
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          onClick={() => inputRef.current?.click()}
-          className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-8 transition-colors hover:border-blue-400 hover:bg-blue-50"
-        >
-          {comprimiendo ? (
-            <>
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-              <span className="text-sm text-gray-600">
-                Comprimiendo imagen...
-              </span>
-            </>
-          ) : (
-            <>
-              <ImagePlus className="h-8 w-8 text-gray-400" />
-              <div className="text-center">
-                <span className="text-sm font-medium text-blue-600">
-                  Toca para tomar o seleccionar foto
-                </span>
-                <p className="mt-1 text-xs text-gray-500">
-                  JPEG, PNG o WebP (máx. 10MB)
-                </p>
-              </div>
-            </>
-          )}
+        // Zona de selección con dos opciones
+        <div className="space-y-3 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-6">
+          <div className={`flex gap-3 ${isMobile ? "" : "justify-center"}`}>
+            {/* Botón Cámara (solo en móviles) */}
+            {isMobile && (
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => cameraInputRef.current?.click()}
+                disabled={comprimiendo}
+              >
+                {comprimiendo ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="mr-2 h-4 w-4" />
+                    Cámara
+                  </>
+                )}
+              </Button>
+            )}
+
+            {/* Botón Galería/Archivos */}
+            <Button
+              type="button"
+              variant="outline"
+              className={isMobile ? "flex-1" : ""}
+              onClick={() => galleryInputRef.current?.click()}
+              disabled={comprimiendo}
+            >
+              <FolderOpen className="mr-2 h-4 w-4" />
+              Galería
+            </Button>
+          </div>
+
+          <p className="text-center text-xs text-gray-500">
+            JPEG, PNG o WebP (máx. 10MB)
+          </p>
         </div>
       )}
 
+      {/* Input para cámara (capture="environment") */}
       <input
-        ref={inputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp"
         capture="environment"
         onChange={handleChange}
         className="hidden"
+        aria-label="Capturar foto con cámara"
+      />
+
+      {/* Input para galería (sin capture) */}
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        onChange={handleChange}
+        className="hidden"
+        aria-label="Seleccionar imagen de galería"
       />
 
       <p className="text-xs text-muted-foreground">

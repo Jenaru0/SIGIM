@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { geocodificarInverso } from "@/lib/helpers";
+import { toast } from "sonner";
+import { geocodificarInverso, geocodificar } from "@/lib/helpers";
 
 interface SelectorUbicacionProps {
   direccion: string;
@@ -18,6 +19,7 @@ export default function SelectorUbicacion({
   onCoordenadas,
 }: SelectorUbicacionProps) {
   const [obteniendo, setObteniendo] = useState(false);
+  const [buscando, setBuscando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const obtenerUbicacion = () => {
@@ -66,6 +68,32 @@ export default function SelectorUbicacion({
     );
   };
 
+  // Geocodificar la dirección escrita
+  const buscarDireccion = async () => {
+    if (!direccion.trim()) {
+      toast.error("Escribe una dirección para buscar");
+      return;
+    }
+
+    setBuscando(true);
+    setError(null);
+    try {
+      const coords = await geocodificar(direccion);
+      if (coords) {
+        onCoordenadas(coords.lat, coords.lng);
+        toast.success("✅ Dirección encontrada en el mapa");
+      } else {
+        toast.error(
+          "No se encontró la dirección. Intenta con otra más específica.",
+        );
+      }
+    } catch {
+      toast.error("Error al buscar la dirección");
+    } finally {
+      setBuscando(false);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <label className="text-sm font-medium">Ubicación del problema</label>
@@ -93,19 +121,33 @@ export default function SelectorUbicacion({
 
       {error && <p className="text-xs text-red-500">{error}</p>}
 
-      {/* Input de dirección manual */}
-      <div className="relative">
+      {/* Input de dirección manual + botón buscar */}
+      <div className="flex gap-2">
         <Input
           placeholder="Ej: Av. Grau 123, San Vicente de Cañete"
           value={direccion}
           onChange={(e) => onDireccionChange(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && buscarDireccion()}
           maxLength={200}
         />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={buscarDireccion}
+          disabled={buscando || !direccion.trim()}
+          className="flex-shrink-0"
+        >
+          {buscando ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Search className="h-4 w-4" />
+          )}
+        </Button>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Puedes usar tu GPS o escribir la dirección. También puedes marcar en el
-        mapa.
+        Usa tu GPS, escribe la dirección y presiona el botón 🔍, o marca
+        directamente en el mapa.
       </p>
     </div>
   );

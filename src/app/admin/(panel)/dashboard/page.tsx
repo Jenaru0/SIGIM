@@ -49,6 +49,30 @@ export default function DashboardPage() {
     cantidad: incidencias.filter((i) => i.categoria === cat.id).length,
   }));
 
+  // Mostrar pantalla vacía si no hay reportes
+  if (total === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-sm text-gray-500">
+            Resumen general de incidencias reportadas
+          </p>
+        </div>
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 py-16">
+          <FileText className="mb-4 h-12 w-12 text-gray-300" />
+          <h3 className="text-lg font-medium text-gray-600">
+            Sin reportes aún
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Los ciudadanos comenzarán a reportar incidencias pronto. Aquí verás
+            las estadísticas en tiempo real.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>

@@ -89,6 +89,37 @@ export function formatearFechaCorta(fecha: Date): string {
 }
 
 /**
+ * Geocodificación directa usando Nominatim (OpenStreetMap)
+ * Convierte una dirección de texto en coordenadas (lat, lng).
+ * Gratis, sin API key. Rate limit: 1 req/s.
+ */
+export async function geocodificar(
+  direccion: string,
+): Promise<{ lat: number; lng: number } | null> {
+  if (!direccion.trim()) return null;
+
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(direccion)}&format=json&limit=1&accept-language=es`,
+      { headers: { "User-Agent": "SIGIM-Canete/1.0" } },
+    );
+    if (!res.ok) throw new Error("Nominatim error");
+
+    const data = await res.json();
+    if (!data || data.length === 0) return null;
+
+    const resultado = data[0];
+    return {
+      lat: parseFloat(resultado.lat),
+      lng: parseFloat(resultado.lon),
+    };
+  } catch (error) {
+    console.error("Error geocodificando dirección:", error);
+    return null;
+  }
+}
+
+/**
  * Geocodificación inversa usando Nominatim (OpenStreetMap)
  * Convierte coordenadas (lat, lng) en una dirección legible.
  * Gratis, sin API key. Rate limit: 1 req/s.

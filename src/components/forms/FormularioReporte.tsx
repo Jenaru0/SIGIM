@@ -51,7 +51,11 @@ export default function FormularioReporte() {
       case 0:
         return formData.categoria !== "";
       case 1:
-        return formData.direccionTexto.trim().length >= 5;
+        return (
+          formData.direccionTexto.trim().length >= 5 &&
+          formData.lat !== null &&
+          formData.lng !== null
+        );
       case 2:
         return formData.foto !== null;
       case 3:
@@ -65,7 +69,7 @@ export default function FormularioReporte() {
     if (!validarPaso(paso)) {
       const mensajes = [
         "Selecciona un tipo de problema",
-        "Indica la ubicación (mínimo 5 caracteres)",
+        "Marca la ubicación en el mapa o busca una dirección válida",
         "Sube una foto de evidencia",
         "Describe el problema (mínimo 10 caracteres)",
       ];
